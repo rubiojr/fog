@@ -49,6 +49,18 @@ module Fog
     service(:load_balancers,  'rackspace/load_balancers', 'LoadBalancers')
 
     def self.authenticate(options, connection_options = {})
+      if options[:rackspace_auth_url] =~ /v2\.0\/tokens/
+        tenant, user = options[:rackspace_username].split(":")       
+        service = options[:rackspace_service_name] || "swift"
+        options.merge!(
+          {
+            :rackspace_tenant => tenant,
+            :rackspace_username => user,
+            :rackspace_service_name => service
+          }
+        )
+        return authenticate_keystone(options, connection_options)
+      end
       rackspace_auth_url = options[:rackspace_auth_url] || "auth.api.rackspacecloud.com"
       url = rackspace_auth_url.match(/^https?:/) ? \
                 rackspace_auth_url : 'https://' + rackspace_auth_url
@@ -68,6 +80,49 @@ module Fog
       })
       response.headers.reject do |key, value|
         !['X-Server-Management-Url', 'X-Storage-Url', 'X-CDN-Management-Url', 'X-Auth-Token'].include?(key)
+      end
+    end
+
+    def self.authenticate_keystone(options, connection_options)
+      rackspace_auth_url = options[:rackspace_auth_url]
+      uri = URI.parse(rackspace_auth_url)
+      connection = Fog::Connection.new(rackspace_auth_url, false, connection_options)
+      @rackspace_api_key = options[:rackspace_api_key]
+      @rackspace_username = options[:rackspace_username]
+      @rackspace_tenant = options[:rackspace_tenant]
+      @rackspace_service_name = options[:rackspace_service_name]
+
+      req_body= {
+        'auth' => {
+          'passwordCredentials'  => {
+            'username' => @rackspace_username,
+            'password' => @rackspace_api_key
+          }
+        }
+      }
+      req_body['auth']['tenantName'] = @rackspace_tenant if @rackspace_tenant
+
+      response = connection.request({
+        :expects  => [200, 204],
+        :headers => {'Content-Type' => 'application/json'},
+        :body  => MultiJson.encode(req_body),
+        :host     => uri.host,
+        :method   => 'POST',
+        :path     =>  (uri.path and not uri.path.empty?) ? uri.path : 'v2.0'
+      })
+      body=MultiJson.decode(response.body)
+
+      if svc = body['access']['serviceCatalog'].detect{ |x| x['name'] == @rackspace_service_name }
+        mgmt_url = svc['endpoints'].detect{|x| x['publicURL']}['publicURL']
+        token = body['access']['token']['id']
+        r = {
+          "X-Storage-Url" => mgmt_url,
+          "X-Auth-Token" => token,
+          "X-Server-Management-Url" => svc['endpoints'].detect{|x| x['adminURL']}['adminURL']
+        } 
+        return r
+      else
+        raise "Unable to parse service catalog."
       end
     end
 
