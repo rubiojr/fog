@@ -9,11 +9,12 @@ module Fog
 
         model Fog::Compute::XenServer::Server
 
-        def all
+        def all(options = {})
           data = connection.get_vms
-          data.delete_if {|vm| vm[:is_a_template]}
-          data.delete_if {|vm| vm[:is_control_domain]}
-          data.delete_if {|vm| vm[:is_snapshot]}
+          data.delete_if { |vm| vm[:is_a_template] and !options[:include_templates] }
+          data.delete_if { |vm| vm[:is_control_domain] }
+          data.delete_if { |vm| vm[:is_snapshot] and !options[:include_snapshots] }
+          data.delete_if { |vm| options[:name_matches] and (vm[:name_label] !~ /#{Regexp.escape(options[:name_matches])}/i ) }
           load(data)
         end
 

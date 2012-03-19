@@ -1,19 +1,22 @@
 module Fog
-  module XenServer
-    class Real
+  module Compute
+    class XenServer
 
-      def create_server( name_label, image = nil, network = nil )
-        create_vm( name_label, image, network )
+      class Real
+
+        def create_server( name_label, template = nil, network = nil )
+          create_vm( name_label, template, network )
+        end
+
       end
 
-    end
+      class Mock
 
-    class Mock
+        def create_server()
+          Fog::Mock.not_implemented
+        end
 
-      def create_server()
-        Fog::Mock.not_implemented
       end
-
     end
   end
 end

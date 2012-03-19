@@ -34,6 +34,7 @@ module Fog
               response = eval("@factory.call('#{method}', '#{@credentials}', #{params.map {|p|  p.is_a?(String) ? "'#{p}'" : p}.join(',')})")
             end
           end
+          #puts "RESPONSE: #{response}"
                     
           if parser
             parser.parse( response["Value"] )

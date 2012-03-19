@@ -11,6 +11,7 @@ module Fog
       requires :xenserver_username
       requires :xenserver_password
       requires :xenserver_url
+      recognizes :xenserver_defaults
       
       model_path 'fog/xenserver/models/compute'
       model :server
@@ -18,6 +19,10 @@ module Fog
       model :host
       collection :hosts
       model :vif
+      collection :storage_repositories
+      model :storage_repository
+      collection :pools
+      model :pool
       
       request_path 'fog/xenserver/requests/compute'
       request :create_server
@@ -27,13 +32,16 @@ module Fog
       request :get_hosts
       request :get_network
       request :get_networks
-      request :get_sr
-      request :get_srs
+      request :get_storage_repository
+      request :get_storage_repositories
       request :get_vif
       request :get_vifs
       request :get_vm
       request :get_vms
       request :start_vm
+      request :get_pool
+      request :get_pools
+      request :set_affinity
     
       class Real
         
@@ -50,8 +58,11 @@ module Fog
           @connection.authenticate(@username, @password)
         end
         
-        def default_image
-          Fog::XenServer::Vm.new( get_vm( @defaults[:image] ) ) if @defaults[:image]
+        def default_template
+          return nil if @defaults[:template].nil?
+          data = get_vm( @defaults[:template] )
+          return nil if data[:reference].nil?
+          Fog::Compute::XenServer::Server.new(data)
         end
         
         def default_network
