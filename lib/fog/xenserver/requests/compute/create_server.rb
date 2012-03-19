@@ -4,8 +4,8 @@ module Fog
 
       class Real
 
-        def create_server( name_label, template = nil, network = nil )
-          create_vm( name_label, template, network )
+        def create_server( name_label, template = nil, network = nil, extra_args = {})
+          create_vm( name_label, template, network, extra_args)
         end
 
       end

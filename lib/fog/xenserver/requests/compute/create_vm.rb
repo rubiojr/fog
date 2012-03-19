@@ -3,7 +3,7 @@ module Fog
     class XenServer
       class Real
         
-        def create_vm( name_label, template = nil, network = nil )
+        def create_vm( name_label, template = nil, network = nil, extra_args = {})
           template ||= default_template
           network ||= default_network
           
@@ -38,7 +38,7 @@ module Fog
             
            # raise Fog::XenServer::OperationFailed unless new_vm.allowed_operations.include?('provision')
             @connection.request({:parser => Fog::Parsers::XenServer::Base.new, :method => 'VM.provision'}, new_vm.reference)
-            #start_vm( new_vm.reference )
+            start_vm( new_vm.reference ) unless extra_args[:auto_start] == false
             
             new_vm
           rescue => e

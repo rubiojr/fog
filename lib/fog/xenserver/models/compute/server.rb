@@ -33,12 +33,12 @@ module Fog
         attribute :pv_args,            :aliases => :PV_args
         attribute :resident_on
         # Virtual Block Devices
-        attribute :vdbs,               :aliases => :VBDs
+        attribute :__vbds,               :aliases => :VBDs
         # Virtual CPUs
         attribute :vcpus_at_startup,   :aliases => :VCPUs_at_startup
         attribute :vcpus_max,          :aliases => :VCPUs_max
         # Virtual Interfaces (NIC)
-        attribute :vifs,               :aliases => :VIFs
+        attribute :__vifs,               :aliases => :VIFs
         attribute :template_name
 
         #ignore_attributes :HVM_boot_params, :HVM_boot_policy, :HVM_shadow_multiplier, :PCI_bus, :PV_bootloader,
@@ -55,6 +55,10 @@ module Fog
           @uuid ||= 0
           super
         end
+
+        def vbds
+          __vbds.collect {|vbd| Fog::Compute::XenServer::VIF.new(connection.get_vbd_by_ref( vbd ))}
+        end
         
         def refresh
           requires :reference
@@ -62,9 +66,13 @@ module Fog
           merge_attributes( data )
         end
 
+        def vifs
+          networks
+        end
+
         # associations
         def networks
-          vifs.collect {|vif| Fog::Compute::XenServer::VIF.new(connection.get_vif_by_ref( vif ))}
+          __vifs.collect {|vif| Fog::Compute::XenServer::VIF.new(connection.get_vif_by_ref( vif ))}
         end
         
         def running_on
@@ -94,9 +102,9 @@ module Fog
           true
         end
 
-        def save
+        def save(params)
           requires :name
-          new_vm = connection.create_server( name, template_name ) 
+          new_vm = connection.create_server( name, template_name, nil, params ) 
           merge_attributes(new_vm.attributes)
           true
         end
