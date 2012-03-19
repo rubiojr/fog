@@ -39,7 +39,8 @@ module Fog
         attribute :vcpus_max,          :aliases => :VCPUs_max
         # Virtual Interfaces (NIC)
         attribute :vifs,               :aliases => :VIFs
-        
+        attribute :template_name
+
         #ignore_attributes :HVM_boot_params, :HVM_boot_policy, :HVM_shadow_multiplier, :PCI_bus, :PV_bootloader,
         #                  :PV_bootloader_args, :PV_kernel, :PV_legacy_args, :PV_ramdisk, :VCPUs_params, :VTPMs,
         #                  :actions_after_crash, :actions_after_reboot, :actions_after_shutdown, :blobs,
@@ -60,18 +61,18 @@ module Fog
           data = connection.get_vm_by_ref( @reference )
           merge_attributes( data )
         end
-        
+
         # associations
         def networks
-          vifs.collect {|vif| Fog::Compute::XenServer::Vif.new(connection.get_vif_by_ref( vif ))}
+          vifs.collect {|vif| Fog::Compute::XenServer::VIF.new(connection.get_vif_by_ref( vif ))}
         end
         
         def running_on
-          Fog::XenServer::Host.new(connection.get_host_by_ref( @resident_on ))
+          Fog::Compute::XenServer::Host.new(connection.get_host_by_ref( @resident_on ))
         end
         
         def home_hypervisor
-          Fog::XenServer::Host.new(connection.get_host_by_ref( @affinity ))
+          connection.hosts.first
         end
         
         def mac_address
@@ -90,6 +91,13 @@ module Fog
         def start
           return false if halted?
           connection.start_server( @reference )
+          true
+        end
+
+        def save
+          requires :name
+          new_vm = connection.create_server( name, template_name ) 
+          merge_attributes(new_vm.attributes)
           true
         end
         

@@ -1,7 +1,7 @@
 module Fog
   module Parsers
     module XenServer
-      class GetSrs < Fog::Parsers::XenServer::Base
+      class GetStorageRepositories < Fog::Parsers::XenServer::Base
         
         def reset
           @response = []

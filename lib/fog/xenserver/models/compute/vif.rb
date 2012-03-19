@@ -4,7 +4,7 @@ module Fog
   module Compute
     class XenServer
     
-      class Vif < Fog::Model
+      class VIF < Fog::Model
         # API Reference here:
         # http://docs.vmd.citrix.com/XenServer/5.6.0/1.0/en_gb/api/?c=VIF
         
