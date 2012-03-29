@@ -24,7 +24,6 @@ module Fog
       collection :pools
       model :pool
       model :vbd
-      
       request_path 'fog/xenserver/requests/compute'
       request :create_server
       request :create_vif
