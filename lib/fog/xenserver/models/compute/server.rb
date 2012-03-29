@@ -57,12 +57,28 @@ module Fog
         end
 
         def vbds
-          __vbds.collect {|vbd| Fog::Compute::XenServer::VIF.new(connection.get_vbd_by_ref( vbd ))}
+          __vbds.collect {|vbd| Fog::Compute::XenServer::VBD.new(connection.get_vbd_by_ref( vbd ))}
+          #__vbds.collect {|vbd| connection.get_vbd_by_ref( vbd ) }
+        end
+
+        def hard_shutdown
+          connection.hard_shutdown_server( reference )
+          wait_for { !running? }
+          true
+        end
+        
+        def destroy
+          raise "VM still running. Power it off first." if running?
+          __vbds.each do |vbd|
+            connection.destroy_vbd( vbd )
+          end
+          connection.destroy_server( reference )
+          true
         end
         
         def refresh
           requires :reference
-          data = connection.get_vm_by_ref( @reference )
+          data = connection.get_vm_by_ref( reference )
           merge_attributes( data )
         end
 
@@ -76,7 +92,7 @@ module Fog
         end
         
         def running_on
-          Fog::Compute::XenServer::Host.new(connection.get_host_by_ref( @resident_on ))
+          Fog::Compute::XenServer::Host.new(connection.get_host_by_ref( resident_on ))
         end
         
         def home_hypervisor
@@ -88,27 +104,27 @@ module Fog
         end
         
         def running?
-          @power_status =~ /Running/
+          power_state =~ /Running/
         end
         
         def halted?
-          @power_status =~ /Halted/
+          power_state =~ /Halted/
         end
         
         # operations
         def start
           return false if halted?
-          connection.start_server( @reference )
+          connection.start_server( reference )
           true
         end
 
-        def save(params)
+        def save(params = {})
           requires :name
-          new_vm = connection.create_server( name, template_name, nil, params ) 
+          new_vm = connection.create_server( name, template_name, nil) 
           merge_attributes(new_vm.attributes)
           true
         end
-        
+
         # def reboot(type = 'SOFT')
         #   requires :reference
         #   connection.reboot_server(@id, type)

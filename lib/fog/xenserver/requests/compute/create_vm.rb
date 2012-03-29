@@ -17,7 +17,8 @@ module Fog
           end
 
           begin
-            raise Fog::XenServer::OperationUnallowed unless template.allowed_operations.include?('clone')
+            #FIXME: need to check that template exist actually
+            raise 'Clone Operation not Allowed' unless template.allowed_operations.include?('clone')
 
             # Clone the VM template
             @connection.request(
