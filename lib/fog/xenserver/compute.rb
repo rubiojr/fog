@@ -23,29 +23,31 @@ module Fog
       model :storage_repository
       collection :pools
       model :pool
+      collection :vbds
       model :vbd
+      collection :vdis
+      model :vdi
       request_path 'fog/xenserver/requests/compute'
       request :create_server
       request :create_vif
       request :create_vm
       request :destroy_server
       request :destroy_vbd
+      request :destroy_vdi
       request :hard_shutdown_server
-      request :get_host
       request :get_hosts
       request :get_network
       request :get_networks
       request :get_storage_repository
       request :get_storage_repositories
-      request :get_vif
       request :get_vifs
-      request :get_vm
       request :get_vms
+      request :get_vm
       request :start_vm
       request :get_pool
       request :get_pools
-      request :get_vbds
-      request :get_vbd
+      request :get_record
+      request :get_records
       request :set_affinity
     
       class Real

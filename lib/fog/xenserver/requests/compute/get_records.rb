@@ -1,20 +1,20 @@
 module Fog
   module Compute
-    class XenServer
+   class XenServer 
 
       class Real
         
         require 'fog/xenserver/parsers/get_records'
         
-        def get_vbds( options = {} )
-          @connection.request(:parser => Fog::Parsers::XenServer::GetRecords.new, :method => 'VBD.get_all_records')
+        def get_records( klass, options = {} )
+          @connection.request(:parser => Fog::Parsers::XenServer::GetRecords.new, :method => "#{klass}.get_all_records")
         end
-
+        
       end
       
       class Mock
         
-        def get_vbds
+        def get_vms
           Fog::Mock.not_implemented
         end
         

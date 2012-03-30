@@ -57,7 +57,7 @@ module Fog
         end
 
         def vbds
-          __vbds.collect {|vbd| Fog::Compute::XenServer::VBD.new(connection.get_vbd_by_ref( vbd ))}
+          __vbds.collect {|vbd| connection.vbds.get vbd }
           #__vbds.collect {|vbd| connection.get_vbd_by_ref( vbd ) }
         end
 
@@ -69,8 +69,8 @@ module Fog
         
         def destroy
           raise "VM still running. Power it off first." if running?
-          __vbds.each do |vbd|
-            connection.destroy_vbd( vbd )
+          vbds.each do |vbd|
+            connection.destroy_vdi( vbd.vdi.reference ) if vbd.type == "Disk"
           end
           connection.destroy_server( reference )
           true
@@ -78,7 +78,7 @@ module Fog
         
         def refresh
           requires :reference
-          data = connection.get_vm_by_ref( reference )
+          data = connection.get_record( reference, 'VM' )
           merge_attributes( data )
         end
 
@@ -88,11 +88,11 @@ module Fog
 
         # associations
         def networks
-          __vifs.collect {|vif| Fog::Compute::XenServer::VIF.new(connection.get_vif_by_ref( vif ))}
+          __vifs.collect {|vif| Fog::Compute::XenServer::VIF.new(connection.get_record( vif, 'VIF' ))}
         end
         
         def running_on
-          Fog::Compute::XenServer::Host.new(connection.get_host_by_ref( resident_on ))
+          Fog::Compute::XenServer::Host.new(connection.get_record( resident_on, 'host' ))
         end
         
         def home_hypervisor

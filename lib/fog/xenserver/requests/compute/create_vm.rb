@@ -13,11 +13,13 @@ module Fog
 
           if template.kind_of? String
             data = get_vm( template )
+            template_string = template
             template = Fog::Compute::XenServer::Server.new(data)
           end
 
           begin
             #FIXME: need to check that template exist actually
+            raise "Template #{template_string} does not exist" if template.allowed_operations.nil?
             raise 'Clone Operation not Allowed' unless template.allowed_operations.include?('clone')
 
             # Clone the VM template
